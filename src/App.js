@@ -1,7 +1,10 @@
 import { useEffect } from "react";
 import Header from "./Header";
 import Main from "./main";
+import Loader from "./Loader";
+import Error from "./Error";
 import { useReducer } from "react";
+import Startscreen from "./Startscreen";
 
 const initialstate = {
   questions: [],
@@ -34,13 +37,17 @@ export default function App() {
       .catch((err) => dispatch({ type: "dataFailed" }));
   }, []);
 
-  const [state, dispatch] = useReducer(reducer, initialstate);
+  // destructuring state object down
+  const [{ questions, status }, dispatch] = useReducer(reducer, initialstate);
+
+  const numQuestions = questions.length;
   return (
     <div className="app">
       <Header />
       <Main>
-        <p>1/15</p>
-        <p>Questions</p>
+        {status === "error" && <Error />}
+        {status === "loading" && <Loader />}
+        {status === "ready" && <Startscreen numQuestions={numQuestions} />}
       </Main>
     </div>
   );
