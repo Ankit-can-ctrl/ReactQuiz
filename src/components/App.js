@@ -6,6 +6,9 @@ import Error from "./Error";
 import { useReducer } from "react";
 import StartScreen from "./StartScreen";
 import Questions from "./Questions";
+import NextButton from "./NextButton";
+import Progress from "./Progress";
+import FinishScreen from "./FinishScreen";
 
 const initialstate = {
   questions: [],
@@ -17,6 +20,7 @@ const initialstate = {
   answer: null,
   // state for storing the data of the points if the answer was correct
   points: 0,
+  highscore: 0,
 };
 function reducer(state, action) {
   switch (action.type) {
@@ -40,11 +44,20 @@ function reducer(state, action) {
         points:
           // conditionally setting the value of points state
           action.payload === question.correctOption
-            ? state.points === question.points
+            ? state.points + question.points
             : state.points,
       };
+    case "nextQuestion":
+      return { ...state, index: state.index + 1, answer: null };
     case "start":
       return { ...state, status: "active" };
+    case "finish":
+      return {
+        ...state,
+        status: "finished",
+        highscore:
+          state.points > state.highscore ? state.points : state.highscore,
+      };
     default:
       throw new Error("Unkown action");
   }
@@ -59,12 +72,12 @@ export default function App() {
   }, []);
 
   // destructuring state object down
-  const [{ questions, status, index, answer }, dispatch] = useReducer(
-    reducer,
-    initialstate
-  );
+  const [{ questions, status, index, answer, points, highscore }, dispatch] =
+    useReducer(reducer, initialstate);
 
   const numQuestions = questions.length;
+  const maxPoints = questions.reduce((prev, cur) => prev + cur.points, 0);
+
   return (
     <div className="app">
       <Header />
@@ -75,10 +88,32 @@ export default function App() {
           <StartScreen numQuestions={numQuestions} dispatch={dispatch} />
         )}
         {status === "active" && (
-          <Questions
-            question={questions[index]}
-            answer={answer}
-            dispatch={dispatch}
+          <>
+            <Progress
+              points={points}
+              index={index}
+              numQuestions={numQuestions}
+              maxPoints={maxPoints}
+              answer={answer}
+            />
+            <Questions
+              question={questions[index]}
+              answer={answer}
+              dispatch={dispatch}
+            />
+            <NextButton
+              dispatch={dispatch}
+              answer={answer}
+              index={index}
+              numQuestions={numQuestions}
+            />
+          </>
+        )}
+        {status === "finished" && (
+          <FinishScreen
+            points={points}
+            maxPoints={maxPoints}
+            highscore={highscore}
           />
         )}
       </Main>
